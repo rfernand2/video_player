@@ -1,0 +1,19 @@
+{
+  "name": "video-player",
+  "version": "0.1.0",
+  "description": "Customizable local video player: timecode overlay, frame/shot stepping, audio scrubbing, shot-grouped markdown notes.",
+  "private": true,
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test \"test/unit/*.test.js\"",
+    "test:e2e": "node test/e2e/run.mjs",
+    "register": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/file-association.ps1",
+    "unregister": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/file-association.ps1 -Unregister"
+  },
+  "devDependencies": {
+    "electron": "^45.3.2",
+    "playwright-core": "^1.65.1"
+  }
+}
