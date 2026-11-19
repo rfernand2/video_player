@@ -2,8 +2,9 @@
 //
 // `scores[i]` is ffmpeg's scene score for frame i (0..1): how much frame i
 // differs from frame i-1, discounted when the previous frame differed just as
-// much (steady motion). A cut shows up as a single isolated spike on the
-// first frame of the new shot.
+// much (steady motion). A cut shows up as a spike on the first frame of the
+// new shot. The frame after it often scores a little too: its change is
+// measured against the cut's, so the new shot's motion isn't discounted.
 
 import { upperBound } from './frame-map.js';
 
@@ -14,7 +15,7 @@ import { upperBound } from './frame-map.js';
  */
 export function findCuts(times, scores, {
   threshold = 0.3,
-  adaptiveFloor = 0.25,
+  adaptiveFloor = 0.5,
   adaptiveRatio = 6,
   minShotSec = 0.25,
 } = {}) {
@@ -43,16 +44,22 @@ export function findCuts(times, scores, {
   return cuts;
 }
 
-/** Is scores[i] at least `ratio` times every other score within minShotSec? */
+/**
+ * Does scores[i] stand out from the other scores within minShotSec? It must be
+ * at least `ratio` times all of them but one, and at least twice that one.
+ * The exception is usually the frame after the cut (see the top of this file),
+ * or a single jump in the picture just before or after it.
+ */
 function standsOut(times, scores, n, i, ratio, minShotSec) {
-  const limit = scores[i] / ratio;
-  for (let j = i - 1; j >= 0 && times[i] - times[j] <= minShotSec; j--) {
-    if (scores[j] > limit) return false;
-  }
-  for (let j = i + 1; j < n && times[j] - times[i] <= minShotSec; j++) {
-    if (scores[j] > limit) return false;
-  }
-  return true;
+  let highest = 0;
+  let second = 0;
+  const add = (score) => {
+    if (score > highest) [highest, second] = [score, highest];
+    else if (score > second) second = score;
+  };
+  for (let j = i - 1; j >= 0 && times[i] - times[j] <= minShotSec; j--) add(scores[j]);
+  for (let j = i + 1; j < n && times[j] - times[i] <= minShotSec; j++) add(scores[j]);
+  return highest <= scores[i] / 2 && second <= scores[i] / ratio;
 }
 
 /** Shots as ranges of frame numbers. */

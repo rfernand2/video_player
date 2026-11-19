@@ -346,11 +346,12 @@ test('changing the shot threshold re-cuts and renumbers the notes', async () => 
     slider.value = v;
     slider.dispatchEvent(new Event('input'));
   }, value);
-  // The grey-to-grey cut is weak: found at the default threshold only because it is isolated.
+  // The grey-to-grey cut is weak: found at the default threshold (0.3) only because it is
+  // isolated and above the adaptive floor (0.15); at 0.5 the floor (0.25) drops it.
   const subtle = await page.evaluate((frame) => window.vp.scene.scores[frame], videos.shots.subtleCut);
-  assert.ok(subtle > 0.1 && subtle < 0.22, `subtle cut scores ${subtle.toFixed(3)}`);
+  assert.ok(subtle > 0.15 && subtle < 0.25, `subtle cut scores ${subtle.toFixed(3)}`);
 
-  await setThreshold(0.9);
+  await setThreshold(0.5);
   assert.equal(await page.evaluate(() => window.vp.shots.count), 5, 'the subtle cut is dropped');
   await pause(1200); // the notes file follows after a short debounce
   assert.match(readNotes(), /^### Shot 5 · 00:00:09:04$/m, 'note renumbered');

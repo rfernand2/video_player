@@ -43,9 +43,11 @@ export default {
     // the slider's setting is remembered instead.
     threshold: 0.3,
     // Quieter cuts (dark scenes, similar framing) still count when the score is
-    // at least threshold * adaptiveFloor AND stands out from its neighbours by
-    // a factor of adaptiveRatio. Set adaptiveRatio to 0 to disable.
-    adaptiveFloor: 0.25,
+    // at least threshold * adaptiveFloor AND stands out from the frames within
+    // minShotSec by a factor of adaptiveRatio (one of them may reach half the
+    // score). Set adaptiveRatio to 0 to disable. Raising the floor ignores more
+    // jumps inside a shot (generated or lip-synced footage often has them).
+    adaptiveFloor: 0.5,
     adaptiveRatio: 6,
     // Two cuts closer than this are merged (flashes, strobing).
     minShotSec: 0.25,

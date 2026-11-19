@@ -22,15 +22,38 @@ test('the first two frames are never a cut', () => {
 });
 
 test('a quiet cut counts when it stands out from its neighbours', () => {
-  const [times, scores] = track(200, 0.005, { 80: 0.12 });
+  const [times, scores] = track(200, 0.005, { 80: 0.2 });
   assert.deepEqual(frames(findCuts(times, scores, { threshold: 0.3 })), [80]);
-  // ...but not below the adaptive floor (0.3 * 0.25 = 0.075)
-  const [t2, s2] = track(200, 0.005, { 80: 0.07 });
+  // ...but not below the adaptive floor (0.3 * 0.5 = 0.15)
+  const [t2, s2] = track(200, 0.005, { 80: 0.14 });
   assert.deepEqual(findCuts(t2, s2, { threshold: 0.3 }), []);
 });
 
+test('a quiet cut counts when the frame after it carries the new shot\'s motion', () => {
+  // BRING BACK THE JACKET v3, frames 778..784: the cut at 781 was missed.
+  const [times, scores] = track(200, 0.002, { 78: 0.001, 79: 0, 80: 0.003, 81: 0.292, 82: 0.06, 83: 0.024, 84: 0.003 });
+  assert.deepEqual(frames(findCuts(times, scores, { threshold: 0.3 })), [81]);
+});
+
+test('a quiet cut counts despite one jump in the picture near it', () => {
+  // BRING BACK THE JACKET v2, frames 2694..2702: a jump at 2696, the cut at 2700.
+  const [times, scores] = track(200, 0.002, { 76: 0.08, 77: 0.009, 78: 0.004, 79: 0.01, 80: 0.29, 81: 0.003 });
+  assert.deepEqual(frames(findCuts(times, scores, { threshold: 0.3 })), [80]);
+});
+
+test('jumps inside a shot are not cuts', () => {
+  // Isolated, but well under the threshold (lip-synced footage, v2 frame 754).
+  const [times, scores] = track(200, 0.002, { 80: 0.085, 120: 0.095 });
+  assert.deepEqual(findCuts(times, scores, { threshold: 0.3 }), []);
+});
+
 test('busy motion below the threshold is not a cut', () => {
-  const [times, scores] = track(200, 0.06, { 80: 0.12, 81: 0.1, 83: 0.11 });
+  const [times, scores] = track(200, 0.06, { 80: 0.2, 81: 0.16, 83: 0.18 });
+  assert.deepEqual(findCuts(times, scores, { threshold: 0.3 }), []);
+});
+
+test('two similar spikes close together below the threshold are not a cut', () => {
+  const [times, scores] = track(200, 0.002, { 80: 0.2, 83: 0.16 });
   assert.deepEqual(findCuts(times, scores, { threshold: 0.3 }), []);
 });
 
